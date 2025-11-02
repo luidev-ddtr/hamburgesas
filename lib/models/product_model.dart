@@ -18,7 +18,7 @@ class Product {
   Product(
       {this.idProduct,
       required this.productName,
-      this.imagePath,
+      this.imagePath, 
       required this.price
       });
 

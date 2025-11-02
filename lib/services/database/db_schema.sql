@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (id_product) REFERENCES products(id_product) ON DELETE RESTRICT,
     UNIQUE (id_order, id_product)
 );
+
 CREATE TABLE IF NOT EXISTS orders (
     id_order INTEGER PRIMARY KEY AUTOINCREMENT,
     total REAL NOT NULL DEFAULT 0.0 CHECK (total >= 0),
@@ -20,7 +21,7 @@ CREATE TABLE IF NOT EXISTS products (
     image_path TEXT,
     price REAL NOT NULL CHECK (price >= 0),
     category TEXT NOT NULL DEFAULT 'comida'
-);
+); 
 INSERT INTO "products" ("id_product","product_name","image_path","price","category") VALUES (1,'Hamburguesa Clásica','assets/images/Hamburguesa.jpg',85.0,'comida'),
  (2,'Alitas de Pollo BBQ','assets/images/alitas_de_pollo.jpg',70.0,'comida'),
  (3,'Empanadas de Carne','assets/images/empanadas.jpg',50.0,'comida'),

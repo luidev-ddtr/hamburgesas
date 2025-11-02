@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hamburgesas/screens/login_screen.dart'; // Asegúrate de que esta ruta sea correcta
+import 'package:flutter_hamburgesas/screens/login_screen.dart'; 
 import 'package:flutter_hamburgesas/services/product_repository.dart';
+import 'package:flutter_hamburgesas/widget/custom_app_bar.dart';
 import 'package:flutter_hamburgesas/models/product_model.dart';
 import '../widget/order_summary_dialog.dart';
 
@@ -38,8 +39,8 @@ class _HomePageState extends State<HomePage>
       _productRepository.getProductsByCategory('comida'),
       _productRepository.getProductsByCategory('bebidas'),
     ]);
-    print(results);
-    print("Hola desde flutter dart, puedo ver la info ? ");
+    // print(results);
+    // print("Hola desde flutter dart, puedo ver la info ? ");
     setState(() {
       _comidas = results[0];
       _bebidas = results[1];
@@ -139,32 +140,10 @@ class _HomePageState extends State<HomePage>
     final crossAxisCount = screenWidth > 600 ? 3 : 2;
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        toolbarHeight: 80.0,
-        title: Row(
-          children: [
-            Image.asset('assets/images/Logo_campestre.jpg', height: 60),
-            const SizedBox(width: 12),
-            const Text('REAL CAMPESTRE'),
-          ],
-        ),
+      appBar: CustomAppBar(
+        titleText: 'REAL CAMPESTRE',
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'logout') {
-                _logout();
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'logout',
-                child: Text('Cerrar Sesión'),
-              ),
-            ],
-            icon: const Icon(Icons.menu, size: 36),
-          ),
-          const SizedBox(width: 10),
+          _buildHomeMenu(),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -243,6 +222,23 @@ class _HomePageState extends State<HomePage>
           ),
         ],
       ),
+    );
+  }
+
+  PopupMenuButton<String> _buildHomeMenu() {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == 'logout') {
+          _logout();
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'logout',
+          child: Text('Cerrar Sesión'),
+        ),
+      ],
+      icon: const Icon(Icons.menu, size: 36),
     );
   }
 
