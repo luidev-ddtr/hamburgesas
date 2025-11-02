@@ -15,15 +15,12 @@ class Product {
 
   final double price; // REAL en SQL -> double en Dart
 
-  @JsonKey(name: 'id_category')
-  final int? idCategory; // FOREIGN KEY, Nullable por ON DELETE SET NULL
-
   Product(
       {this.idProduct,
       required this.productName,
       this.imagePath,
-      required this.price,
-      this.idCategory});
+      required this.price
+      });
 
   factory Product.fromJson(Map<String, dynamic> json) => _$ProductFromJson(json);
   Map<String, dynamic> toJson() => _$ProductToJson(this);

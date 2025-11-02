@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hamburgesas/screens/login_screen.dart'; // Asegúrate de que esta ruta sea correcta
+import 'package:flutter_hamburgesas/services/product_repository.dart';
+import 'package:flutter_hamburgesas/models/product_model.dart';
 import '../widget/order_summary_dialog.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,57 +17,34 @@ class _HomePageState extends State<HomePage>
 
   final List<Map<String, dynamic>> _order = [];
 
-  // Datos de ejemplo
-  final List<Map<String, dynamic>> comidas = [
-    {
-      'name': 'Hamburguesa Clásica',
-      'image': 'assets/images/Hamburguesa.jpg',
-      'price': 85.00,
-    },
-    {
-      'name': 'Alitas de Pollo BBQ',
-      'image': 'assets/images/alitas_de_pollo.jpg',
-      'price': 70.00,
-    },
-    {
-      'name': 'Empanadas de Carne',
-      'image': 'assets/images/empanadas.jpg',
-      'price': 50.00,
-    },
-    {
-      'name': 'Papas a la Francesa',
-      'image': 'assets/images/papas_a_la_francesa.jpg',
-      'price': 40.00,
-    },
-  ];
+  // Instancia del repositorio de productos.
+  final ProductRepository _productRepository = ProductRepository();
 
-  final List<Map<String, dynamic>> bebidas = [
-    {
-      'name': 'Refresco de Cola',
-      'image': 'assets/images/refresco.jpg',
-      'price': 25.00,
-    },
-    {
-      'name': 'Jugo de Naranja',
-      'image': 'assets/images/jugo.jpg',
-      'price': 30.00,
-    },
-    {
-      'name': 'Agua de Horchata',
-      'image': 'assets/images/agua.jpg',
-      'price': 20.00,
-    },
-    {
-      'name': 'Delaware Punch',
-      'image': 'assets/images/cafe.jpg',
-      'price': 25.00,
-    },
-  ];
+  // Listas para almacenar los productos obtenidos de la BD.
+  List<Product> _comidas = [];
+  List<Product> _bebidas = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    // Usamos Future.wait para cargar ambas categorías en paralelo.
+    final results = await Future.wait([
+      _productRepository.getProductsByCategory('comida'),
+      _productRepository.getProductsByCategory('bebidas'),
+    ]);
+    print(results);
+    print("Hola desde flutter dart, puedo ver la info ? ");
+    setState(() {
+      _comidas = results[0];
+      _bebidas = results[1];
+      _isLoading = false;
+    });
   }
 
   @override
@@ -94,20 +73,21 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  void _addToOrder(Map<String, dynamic> product) {
+  void _addToOrder(Product product) {
     setState(() {
       final uniqueId = DateTime.now().millisecondsSinceEpoch;
+      // La lógica de la orden (_order) sigue usando Map<String, dynamic>.
+      // Convertimos el objeto Product a un mapa aquí.
       _order.add({
         'id': uniqueId,
-        'name': product['name'],
-        'price': product['price'],
-        // Se añade el precio base para consistencia con el diálogo de edición.
-        'base_price': product['price'],
+        'name': product.productName,
+        'price': product.price,
+        'base_price': product.price,
         'quantity': 1,
         'extras': [],
         'notes': '',
       });
-      _showTopSnackBar('${product['name']} añadido a la orden.');
+      _showTopSnackBar('${product.productName} añadido a la orden.');
     });
   }
 
@@ -216,19 +196,25 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           ),
-          TabBarView(
-            controller: _tabController,
-            children: [
-              _buildProductGrid(comidas, crossAxisCount),
-              _buildProductGrid(bebidas, crossAxisCount),
-            ],
-          ),
+          _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF980101),
+                  ),
+                )
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildProductGrid(_comidas, crossAxisCount),
+                    _buildProductGrid(_bebidas, crossAxisCount),
+                  ],
+                ),
           Positioned(
             bottom: 20,
             left: 20,
             right: 20,
             child: ElevatedButton.icon(
-              onPressed: _showOrderDialog,
+              onPressed: _isLoading ? null : _showOrderDialog,
               icon: const Icon(
                 Icons.shopping_cart_outlined,
                 color: Colors.white,
@@ -243,6 +229,7 @@ class _HomePageState extends State<HomePage>
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF980101),
+                disabledBackgroundColor: Colors.grey,
                 padding: const EdgeInsets.symmetric(
                   vertical: 18,
                   horizontal: 24,
@@ -260,7 +247,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildProductGrid(
-    List<Map<String, dynamic>> products,
+    List<Product> products,
     int crossAxisCount,
   ) {
     return GridView.builder(
@@ -278,7 +265,7 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildGridItem({required Map<String, dynamic> product}) {
+  Widget _buildGridItem({required Product product}) {
     return Card(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -288,7 +275,7 @@ class _HomePageState extends State<HomePage>
         children: [
           Expanded(
             child: Image.asset(
-              product['image']!,
+              product.imagePath?? 'assets/images/default.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return const Icon(Icons.fastfood, color: Colors.grey, size: 60);
@@ -301,7 +288,7 @@ class _HomePageState extends State<HomePage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product['name']!,
+                  product.productName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -315,7 +302,7 @@ class _HomePageState extends State<HomePage>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '\$${(product['price'] as double).toStringAsFixed(2)}',
+                      '\$${product.price.toStringAsFixed(2)}',
                       style: TextStyle(fontSize: 15, color: Colors.grey[700]),
                     ),
                     InkWell(

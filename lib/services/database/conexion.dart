@@ -9,8 +9,8 @@ import 'package:sqflite/sqflite.dart';
 /// Utiliza un patrón Singleton para garantizar una única instancia de la base de datos
 /// en toda la aplicación, evitando conflictos y fugas de memoria.
 class DatabaseService {
-  static const _databaseName = "bd.db";
-  static const _databaseVersion = 1;
+  static const _databaseName = "flutter_hamburgesas.db";
+  static const _databaseVersion = 2;
 
   // --- Implementación del Singleton ---
 
@@ -48,6 +48,12 @@ class DatabaseService {
   /// Ejecuta el script SQL para crear la estructura inicial de la base de datos.
   Future<void> _onCreate(Database db, int version) async {
     final String schemaScript = await rootBundle.loadString('lib/services/database/db_schema.sql');
-    await db.execute(schemaScript);
+    // El script contiene múltiples sentencias. Debemos separarlas y ejecutarlas una por una.
+    for (final statement in schemaScript.split(';')) {
+      // Nos aseguramos de no ejecutar sentencias vacías (por ejemplo, después del último ';').
+      if (statement.trim().isNotEmpty) {
+        await db.execute(statement);
+      }
+    }
   }
 }

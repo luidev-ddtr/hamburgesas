@@ -21,23 +21,25 @@ class ProductRepository {
     return await db.insert('products', product.toJson());
   }
 
-  /// Obtiene todos los productos de la base de datos.
-  ///
-  /// Realiza una consulta a la tabla 'products' y convierte cada
-  /// resultado (que es un mapa) en un objeto `Product` usando `fromJson()`.
-  Future<List<Product>> getAllProducts() async {
-    final db = await _db;
-    final List<Map<String, dynamic>> maps = await db.query('products');
 
-    // Si no hay resultados, devuelve una lista vacía.
+  /// Obtiene todos los productos de una categoría específica.
+  ///
+  /// Realiza una consulta a la tabla 'products' filtrando por el campo 'category'
+  /// y convierte cada resultado en un objeto `Product`.
+  Future<List<Product>> getProductsByCategory(String category) async {
+    final db = await _db;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'products',
+      // Especificamos las columnas para que coincidan con el modelo Product.
+      columns: ['id_product', 'product_name', 'image_path', 'price'],
+      where: 'category = ?',
+      whereArgs: [category],
+    );
+ 
     if (maps.isEmpty) {
       return [];
     }
-
-    // Convierte la lista de mapas en una lista de Productos.
-    return List.generate(maps.length, (i) {
-      return Product.fromJson(maps[i]);
-    });
+    return List.generate(maps.length, (i) => Product.fromJson(maps[i]));
   }
 
   /// Actualiza un producto existente en la base de datos.
@@ -52,7 +54,7 @@ class ProductRepository {
       whereArgs: [product.idProduct],
     );
   }
-
+ 
   /// Elimina un producto de la base de datos por su ID.
   Future<int> deleteProduct(int id) async {
     final db = await _db;
