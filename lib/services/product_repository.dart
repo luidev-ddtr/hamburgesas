@@ -73,7 +73,7 @@ class ProductRepository {
     return await db.update(
       'products',
       product.toJson(),
-      where: 'idProduct = ?',
+      where: 'id_product = ?',
       whereArgs: [product.idProduct],
     );
   }

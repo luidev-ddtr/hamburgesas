@@ -7,6 +7,7 @@ import 'package:flutter_hamburgesas/widget/custom_app_bar.dart';
 import 'package:flutter_hamburgesas/widget/primary_action_button.dart';
 import 'package:flutter_hamburgesas/services/product_repository.dart';
 import 'package:flutter_hamburgesas/widget/product_list_dialog.dart';
+import 'package:flutter_hamburgesas/screens/product_form_screen.dart';
 import 'package:flutter_hamburgesas/widget/dialog_header.dart';
 import 'package:intl/intl.dart';
 
@@ -38,20 +39,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showDialog(
       context: context, 
       builder: (context) => AlertDialog(
-        title: const DialogHeader(icon: Icons.settings, title: 'VER MAS'),
+        title: const DialogHeader(icon: Icons.settings, title: 'GESTIONAR PRODUCTOS'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             PrimaryActionButton(
               text: 'AGREGAR PRODUCTO',
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el diálogo actual
-                // TODO: Navegar a la pantalla de agregar producto
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Funcionalidad "Agregar" no implementada')),
-                );
-              },
+              onPressed: () => _navigateToProductForm(),
             ),
             const SizedBox(height: 16),
             PrimaryActionButton(
@@ -81,12 +76,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (context) => ProductListDialog(
         products: allProducts,
-        onEdit: (product) {
-          // Lógica para editar
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Editar "${product.productName}" (no implementado)')),
-          );
-        },
+        onEdit: (product) => _navigateToProductForm(product: product),
         onArchive: (product) async {
           final bool isCurrentlyArchived = product.idStatus == 2;
           final message;
@@ -109,6 +99,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         },
       ),
     );
+  }
+
+  void _navigateToProductForm({Product? product}) async {
+    // Cierra el diálogo de gestión si está abierto
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProductFormScreen(product: product)),
+    );
+
+    if (result == true) _loadOrders();
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
