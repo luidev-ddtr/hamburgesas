@@ -12,6 +12,7 @@ Order _$OrderFromJson(Map<String, dynamic> json) => Order(
   orderDate: DateTime.parse(json['order_date'] as String),
 );
 
+
 Map<String, dynamic> _$OrderToJson(Order instance) => <String, dynamic>{
   'id_order': instance.idOrder,
   'total': instance.total,

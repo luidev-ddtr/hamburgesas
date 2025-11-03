@@ -4,18 +4,23 @@ import 'order_group_item.dart';
 import 'order_action_button.dart';
 import 'dialog_header.dart';
 import '../models/order_dialog_model.dart';
+import '../models/order_item_model.dart' as db_order_item;
+import '../models/order_model.dart' as db_order;
 import '../services/order_calculator_service.dart';
+import '../services/order_repository.dart';
 
 class OrderSummaryDialog extends StatefulWidget {
   final List<Map<String, dynamic>> orderItems;
   final Function(Map<String, dynamic>) onUpdateItem;
   final Function(int) onDeleteItem;
+  final VoidCallback onConfirmOrder;
 
   const OrderSummaryDialog({
     super.key,
     required this.orderItems,
     required this.onUpdateItem,
     required this.onDeleteItem,
+    required this.onConfirmOrder,
   });
 
   @override
@@ -25,6 +30,7 @@ class OrderSummaryDialog extends StatefulWidget {
 class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
   int? _selectedItemId;
   String? _expandedGroupName;
+  final OrderRepository _orderRepository = OrderRepository();
 
   void _editSelectedItem() async {
     if (_selectedItemId == null) {
@@ -72,6 +78,62 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
         backgroundColor: Colors.orangeAccent,
       ),
     );
+  }
+
+  Future<void> _confirmAndSaveOrder() async {
+    // --- INICIO DE LA LÓGICA DE AGRUPACIÓN ---
+    final Map<int, db_order_item.OrderItem> groupedItems = {};
+
+    for (var item in widget.orderItems) {
+      final productId = item['id_product'] as int;
+      final quantity = item['quantity'] as int;
+      final price = item['price'] as double;
+
+      if (groupedItems.containsKey(productId)) {
+        // Si el producto ya existe en nuestro mapa, solo sumamos la cantidad.
+        final existingItem = groupedItems[productId]!;
+        groupedItems[productId] = db_order_item.OrderItem(
+          idOrder: 0, // Temporal
+          idProduct: productId,
+          quantity: existingItem.quantity + quantity,
+          unitPriceAtOrder: price, // Usamos el precio del último ítem (asumimos que es el mismo)
+        );
+      } else {
+        // Si es la primera vez que vemos este producto, lo añadimos al mapa.
+        groupedItems[productId] = db_order_item.OrderItem(idOrder: 0, idProduct: productId, quantity: quantity, unitPriceAtOrder: price);
+      }
+    }
+    final orderItemsForDb = groupedItems.values.toList();
+    // --- FIN DE LA LÓGICA DE AGRUPACIÓN ---
+    final total = widget.orderItems.fold<double>(
+      0.0, (sum, item) => sum + (item['price'] * item['quantity']));
+
+    final orderForDb = db_order.Order(
+      total: total,
+      orderDate: DateTime.now(),
+    );
+
+    try {
+      print("--- INICIANDO INSERCIÓN DE ORDEN ---");
+      print("Datos de la Orden: ${orderForDb.toJson()}");
+      print("Número de Artículos: ${orderItemsForDb.length}");
+      print("Artículos a insertar (agrupados):");
+      for (var item in orderItemsForDb) {
+        print("- Producto ID: ${item.idProduct}, Cantidad: ${item.quantity}, Precio: ${item.unitPriceAtOrder}");
+      }
+
+      
+      final newOrderId = await _orderRepository.insertOrder(orderForDb, orderItemsForDb);
+      
+      print("--- INSERCIÓN COMPLETADA ---");
+      print("Orden guardada con éxito. Nuevo ID de Orden: $newOrderId");
+
+      widget.onConfirmOrder();
+
+    } catch (e) {
+      print("Error al guardar la orden: $e");
+      _showSnackBar("Error al guardar la orden. Intente de nuevo.");
+    }
   }
 
   @override
@@ -204,7 +266,7 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: _confirmAndSaveOrder,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF980101),
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -219,4 +281,4 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
       ),
     );
   }
-}
+}  

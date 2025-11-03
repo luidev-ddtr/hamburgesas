@@ -81,6 +81,7 @@ class _HomePageState extends State<HomePage>
       // Convertimos el objeto Product a un mapa aquí.
       _order.add({
         'id': uniqueId,
+        'id_product': product.idProduct, // <-- AÑADIDO: ID del producto para la BD
         'name': product.productName,
         'price': product.price,
         'base_price': product.price,
@@ -121,6 +122,13 @@ class _HomePageState extends State<HomePage>
           orderItems: _order,
           onUpdateItem: _updateOrderItem,
           onDeleteItem: _deleteOrderItem,
+          onConfirmOrder: () {
+            setState(() {
+              _order.clear(); // Limpiamos la orden en la UI
+            });
+            Navigator.of(context).pop(); // Cerramos el diálogo
+            _showTopSnackBar('¡Orden confirmada y enviada!', isError: false);
+          },
         );
       },
     );

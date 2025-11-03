@@ -17,7 +17,7 @@ class OrderItem {
 
   @JsonKey(name: 'unit_price_at_order')
   final double unitPriceAtOrder; 
-
+ 
   OrderItem( 
       {this.idOrderItem,
       required this.idOrder,

@@ -11,9 +11,9 @@ class Order {
 
   @JsonKey(name: 'order_date')
   final DateTime orderDate;
-
+ 
   Order({this.idOrder, this.total = 0.0, required this.orderDate});
 
   factory Order.fromJson(Map<String, dynamic> json) => _$OrderFromJson(json);
   Map<String, dynamic> toJson() => _$OrderToJson(this);
-} 
+}  
