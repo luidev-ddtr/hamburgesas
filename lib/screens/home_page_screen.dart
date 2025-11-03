@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hamburgesas/screens/login_screen.dart'; 
+import 'package:flutter_hamburgesas/screens/dashboar_order.dart';
 import 'package:flutter_hamburgesas/services/product_repository.dart';
 import 'package:flutter_hamburgesas/widget/custom_app_bar.dart';
 import 'package:flutter_hamburgesas/models/product_model.dart';
@@ -236,11 +237,23 @@ class _HomePageState extends State<HomePage>
   PopupMenuButton<String> _buildHomeMenu() {
     return PopupMenuButton<String>(
       onSelected: (value) {
-        if (value == 'logout') {
+        if (value == 'dashboard') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          );
+        } else if (value == 'logout') {
           _logout();
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'dashboard',
+          child: ListTile(
+            leading: Icon(Icons.dashboard),
+            title: Text('Panel de Control'),
+          ),
+        ),
         const PopupMenuItem<String>(
           value: 'logout',
           child: Text('Cerrar Sesión'),

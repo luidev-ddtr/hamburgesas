@@ -1,5 +1,7 @@
 import 'package:flutter_hamburgesas/models/order_item_model.dart';
 import 'package:flutter_hamburgesas/models/order_model.dart';
+import 'package:flutter_hamburgesas/models/view_order_model.dart';
+import 'package:flutter_hamburgesas/models/order_detail_model.dart';
 import 'package:flutter_hamburgesas/services/database/conexion.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -38,9 +40,45 @@ class OrderRepository {
       }
       // 3. Ejecutar todas las inserciones de los artículos en un solo lote para mayor eficiencia.
       await batch.commit(noResult: true);
-      print("Se introdujeron todos los datos a la BD");
-      print("La informacion que se introdujo fue $order y $items");
+      // print("Se introdujeron todos los datos a la BD");
+      // print("La informacion que se introdujo fue $order y $items");
       return orderId;
     });
+  }
+
+  /// Obtiene todas las órdenes de la base de datos, ordenadas por fecha descendente.
+  /// Utiliza la vista `ORDER_VIEW` para obtener datos agregados.
+  ///
+  /// Devuelve una lista de objetos [DashboardOrder].
+  Future<List<DashboardOrder>> getOrders() async {
+    final db = await _db;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'ORDER_VIEW',
+    );
+
+    if (maps.isEmpty) {
+      return [];
+    }
+    return List.generate(maps.length, (i) => DashboardOrder.fromJson(maps[i]));
+  }
+
+  /// Obtiene los productos y cantidades para una orden específica.
+  ///
+  /// [orderId]: El ID de la orden de la cual se quieren obtener los detalles.
+  ///
+  /// Devuelve una lista de objetos [OrderDetail].
+  Future<List<OrderDetail>> getOrderDetails(int orderId) async {
+    final db = await _db;
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT p.product_name, oi.quantity 
+      FROM order_items oi
+      JOIN products p ON oi.id_product = p.id_product
+      WHERE oi.id_order = ?
+    ''', [orderId]);
+
+    if (maps.isEmpty) {
+      return [];
+    }
+    return List.generate(maps.length, (i) => OrderDetail.fromJson(maps[i]));
   }
 }

@@ -51,13 +51,32 @@ class _LoginPageState extends State<LoginPage> {
 
   PopupMenuButton<String> _buildLoginMenu() {
     return PopupMenuButton<String>(
-      onSelected: (value) {
-        // Lógica para el menú
+      onSelected: (value) async {
+        if (value == 'dashboard') {
+          // Para este ejemplo, mostramos un mensaje. En una app real,
+          // se verificaría si el usuario está logueado antes de navegar.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Por favor, inicie sesión para acceder al panel.'),
+              backgroundColor: Colors.orangeAccent,
+            ),
+          );
+        }
+        if (value == 'settings') {
+          // Lógica para configuración
+        }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         const PopupMenuItem<String>(
           value: 'settings',
           child: Text('Configuración'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'dashboard',
+          child: ListTile(
+            leading: Icon(Icons.dashboard),
+            title: Text('Panel de Control'),
+          ),
         ),
       ],
       icon: const Icon(Icons.menu, size: 36),
