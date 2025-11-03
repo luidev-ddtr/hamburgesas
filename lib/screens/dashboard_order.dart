@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hamburgesas/models/order_detail_model.dart';
+import 'package:flutter_hamburgesas/models/product_model.dart';
 import 'package:flutter_hamburgesas/models/view_order_model.dart';
 import 'package:flutter_hamburgesas/services/order_repository.dart';
 import 'package:flutter_hamburgesas/widget/custom_app_bar.dart';
 import 'package:flutter_hamburgesas/widget/primary_action_button.dart';
+import 'package:flutter_hamburgesas/services/product_repository.dart';
+import 'package:flutter_hamburgesas/widget/product_list_dialog.dart';
+import 'package:flutter_hamburgesas/widget/dialog_header.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -15,6 +19,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final OrderRepository _orderRepository = OrderRepository();
+  final ProductRepository _productRepository = ProductRepository();
   late Future<List<DashboardOrder>> _ordersFuture;
 
   @override
@@ -29,18 +34,97 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  void _showProductManagementDialog() {
+    showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: const DialogHeader(icon: Icons.settings, title: 'VER MAS'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PrimaryActionButton(
+              text: 'AGREGAR PRODUCTO',
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo actual
+                // TODO: Navegar a la pantalla de agregar producto
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Funcionalidad "Agregar" no implementada')),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            PrimaryActionButton(
+              text: 'VER PRODUCTOS',
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo actual
+                _showViewProductsDialog(); // Abre el nuevo diálogo
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('CANCELAR'),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showViewProductsDialog() async {
+    final allProducts = await _productRepository.getAllProducts();
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => ProductListDialog(
+        products: allProducts,
+        onEdit: (product) {
+          // Lógica para editar
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Editar "${product.productName}" (no implementado)')),
+          );
+        },
+        onArchive: (product) async {
+          final bool isCurrentlyArchived = product.idStatus == 2;
+          final message;
+
+          if (isCurrentlyArchived) {
+            await _productRepository.unarchiveProduct(product.idProduct!);
+            message = 'Producto "${product.productName}" restaurado.';
+          } else {
+            await _productRepository.archiveProduct(product.idProduct!);
+            message = 'Producto "${product.productName}" archivado.';
+          }
+
+          if (mounted) {
+            Navigator.of(context).pop(); // Cierra el diálogo de la lista
+            _showViewProductsDialog(); // Vuelve a abrirlo para ver el cambio
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message), backgroundColor: Colors.green[700]),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: isError ? Colors.redAccent : Colors.green[700],
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        titleText: 'PANEL DE CONTROL',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, size: 30),
-            onPressed: _loadOrders,
-            tooltip: 'Refrescar órdenes',
-          )
-        ],
+      appBar: AppBar(
+        title: const Text('PANEL DE CONTROL'),
+        backgroundColor: Colors.white,
+        elevation: 1,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -67,36 +151,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: PrimaryActionButton(
-                text: 'AGREGAR',
-                onPressed: () {
-                  // TODO: Navegar a la pantalla de agregar producto
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Funcionalidad no implementada')),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: PrimaryActionButton(
-                text: 'ARCHIVAR',
-                onPressed: () {
-                  // TODO: Navegar a la pantalla de archivar producto
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Funcionalidad no implementada')),
-                  );
-                },
-              ),
-            ),
-          ],
+        PrimaryActionButton(
+          text: 'GESTIONAR PRODUCTOS',
+          onPressed: _showProductManagementDialog,
         ),
       ],
     );
   }
+
 
   Widget _buildOrderHistorySection() {
     return Column(

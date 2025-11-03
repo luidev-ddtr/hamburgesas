@@ -1,4 +1,30 @@
 BEGIN TRANSACTION;
+
+-- 1. Crear la tabla STATUS (no depende de nadie)
+CREATE TABLE IF NOT EXISTS status (
+    id_status INTEGER PRIMARY KEY AUTOINCREMENT, -- Corregido a id_status
+    status_name TEXT NOT NULL
+);
+
+-- 2. Crear la tabla ORDERS (no depende de nadie)
+CREATE TABLE IF NOT EXISTS orders ( 
+    id_order INTEGER PRIMARY KEY AUTOINCREMENT,
+    total REAL NOT NULL DEFAULT 0.0 CHECK (total >= 0),
+    order_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP 
+);
+
+-- 3. Crear la tabla PRODUCTS (depende de STATUS)
+CREATE TABLE IF NOT EXISTS products (
+    id_product INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_status INTEGER NOT NULL DEFAULT 1,
+    product_name TEXT NOT NULL,
+    image_path TEXT,
+    price REAL NOT NULL CHECK (price >= 0),
+    category TEXT NOT NULL DEFAULT 'comida', -- ERROR CORREGIDO: Faltaba esta coma
+    FOREIGN KEY (id_status) REFERENCES status (id_status) 
+);
+
+-- 4. Crear la tabla ORDER_ITEMS (depende de ORDERS y PRODUCTS)
 CREATE TABLE IF NOT EXISTS order_items (
     id_order_item INTEGER PRIMARY KEY AUTOINCREMENT,
     id_order INTEGER NOT NULL,
@@ -10,18 +36,12 @@ CREATE TABLE IF NOT EXISTS order_items (
     UNIQUE (id_order, id_product)
 );
 
-CREATE TABLE IF NOT EXISTS orders ( 
-    id_order INTEGER PRIMARY KEY AUTOINCREMENT,
-    total REAL NOT NULL DEFAULT 0.0 CHECK (total >= 0),
-    order_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP 
-);
-CREATE TABLE IF NOT EXISTS products (
-    id_product INTEGER PRIMARY KEY AUTOINCREMENT,
-    product_name TEXT NOT NULL,
-    image_path TEXT,
-    price REAL NOT NULL CHECK (price >= 0),
-    category TEXT NOT NULL DEFAULT 'comida'
-); 
+
+INSERT INTO "status" (status_name) VALUES 
+    ("activo"),
+    ("desactivado"), 
+    ("sin stock");
+
 INSERT INTO "products" ("id_product","product_name","image_path","price","category") VALUES (1,'Hamburguesa Clásica','assets/images/Hamburguesa.jpg',85.0,'comida'),
  (2,'Alitas de Pollo BBQ','assets/images/alitas_de_pollo.jpg',70.0,'comida'),
  (3,'Empanadas de Carne','assets/images/empanadas.jpg',50.0,'comida'),

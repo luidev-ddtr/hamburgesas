@@ -113,27 +113,27 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
       orderDate: DateTime.now(),
     );
 
-    try {
-      print("--- INICIANDO INSERCIÓN DE ORDEN ---");
-      print("Datos de la Orden: ${orderForDb.toJson()}");
-      print("Número de Artículos: ${orderItemsForDb.length}");
-      print("Artículos a insertar (agrupados):");
-      for (var item in orderItemsForDb) {
-        print("- Producto ID: ${item.idProduct}, Cantidad: ${item.quantity}, Precio: ${item.unitPriceAtOrder}");
-      }
+    // try {
+    //   print("--- INICIANDO INSERCIÓN DE ORDEN ---");
+    //   print("Datos de la Orden: ${orderForDb.toJson()}");
+    //   print("Número de Artículos: ${orderItemsForDb.length}");
+    //   print("Artículos a insertar (agrupados):");
+    //   for (var item in orderItemsForDb) {
+    //     print("- Producto ID: ${item.idProduct}, Cantidad: ${item.quantity}, Precio: ${item.unitPriceAtOrder}");
+    //   }
 
       
-      final newOrderId = await _orderRepository.insertOrder(orderForDb, orderItemsForDb);
+    //   final newOrderId = await _orderRepository.insertOrder(orderForDb, orderItemsForDb);
       
-      print("--- INSERCIÓN COMPLETADA ---");
-      print("Orden guardada con éxito. Nuevo ID de Orden: $newOrderId");
+    //   print("--- INSERCIÓN COMPLETADA ---");
+    //   print("Orden guardada con éxito. Nuevo ID de Orden: $newOrderId");
 
-      widget.onConfirmOrder();
+    //   widget.onConfirmOrder();
 
-    } catch (e) {
-      print("Error al guardar la orden: $e");
-      _showSnackBar("Error al guardar la orden. Intente de nuevo.");
-    }
+    // } catch (e) {
+    //   print("Error al guardar la orden: $e");
+    //   _showSnackBar("Error al guardar la orden. Intente de nuevo.");
+    // }
   }
 
   @override

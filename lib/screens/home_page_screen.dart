@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hamburgesas/screens/login_screen.dart'; 
-import 'package:flutter_hamburgesas/screens/dashboar_order.dart';
-import 'package:flutter_hamburgesas/services/product_repository.dart';
+import 'package:flutter_hamburgesas/screens/dashboard_order.dart';
+import 'package:flutter_hamburgesas/services/order_service.dart';
 import 'package:flutter_hamburgesas/widget/custom_app_bar.dart';
 import 'package:flutter_hamburgesas/models/product_model.dart';
+import 'package:flutter_hamburgesas/services/product_repository.dart';
 import '../widget/order_summary_dialog.dart';
+import '../widget/product_grid_item.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,10 +19,10 @@ class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final List<Map<String, dynamic>> _order = [];
-
   // Instancia del repositorio de productos.
   final ProductRepository _productRepository = ProductRepository();
+  // Instancia del nuevo servicio de órdenes.
+  final OrderService _orderService = OrderService();
 
   // Listas para almacenar los productos obtenidos de la BD.
   List<Product> _comidas = [];
@@ -31,6 +33,7 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _orderService.addListener(_onOrderChanged);
     _loadProducts();
   }
 
@@ -52,8 +55,13 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     _tabController.dispose();
+    _orderService.removeListener(_onOrderChanged);
+    _orderService.dispose();
     super.dispose();
   }
+
+  // Listener para reconstruir la UI cuando la orden cambia.
+  void _onOrderChanged() => setState(() {});
 
   // --- FUNCIÓN MODIFICADA ---
   // Muestra un SnackBar en la parte superior de la pantalla.
@@ -76,43 +84,12 @@ class _HomePageState extends State<HomePage>
   }
 
   void _addToOrder(Product product) {
-    setState(() {
-      final uniqueId = DateTime.now().millisecondsSinceEpoch;
-      // La lógica de la orden (_order) sigue usando Map<String, dynamic>.
-      // Convertimos el objeto Product a un mapa aquí.
-      _order.add({
-        'id': uniqueId,
-        'id_product': product.idProduct, // <-- AÑADIDO: ID del producto para la BD
-        'name': product.productName,
-        'price': product.price,
-        'base_price': product.price,
-        'quantity': 1,
-        'extras': [],
-        'notes': '',
-      });
-      _showTopSnackBar('${product.productName} añadido a la orden.');
-    });
-  }
-
-  void _updateOrderItem(Map<String, dynamic> updatedItem) {
-    setState(() {
-      final index = _order.indexWhere(
-        (item) => item['id'] == updatedItem['id'],
-      );
-      if (index != -1) {
-        _order[index] = updatedItem;
-      }
-    });
-  }
-
-  void _deleteOrderItem(int itemId) {
-    setState(() {
-      _order.removeWhere((item) => item['id'] == itemId);
-    });
+    _orderService.addToOrder(product);
+    _showTopSnackBar('${product.productName} añadido a la orden.');
   }
 
   void _showOrderDialog() {
-    if (_order.isEmpty) {
+    if (_orderService.isEmpty) {
       _showTopSnackBar('Tu orden está vacía.', isError: true);
       return;
     }
@@ -120,13 +97,11 @@ class _HomePageState extends State<HomePage>
       context: context,
       builder: (BuildContext context) {
         return OrderSummaryDialog(
-          orderItems: _order,
-          onUpdateItem: _updateOrderItem,
-          onDeleteItem: _deleteOrderItem,
+          orderItems: _orderService.orderItems,
+          onUpdateItem: _orderService.updateOrderItem,
+          onDeleteItem: _orderService.deleteOrderItem,
           onConfirmOrder: () {
-            setState(() {
-              _order.clear(); // Limpiamos la orden en la UI
-            });
+            _orderService.clearOrder(); // Limpiamos la orden a través del servicio
             Navigator.of(context).pop(); // Cerramos el diálogo
             _showTopSnackBar('¡Orden confirmada y enviada!', isError: false);
           },
@@ -236,12 +211,11 @@ class _HomePageState extends State<HomePage>
 
   PopupMenuButton<String> _buildHomeMenu() {
     return PopupMenuButton<String>(
-      onSelected: (value) {
+      onSelected: (value) async { // 1. Convertir la función a async
         if (value == 'dashboard') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const DashboardScreen()),
-          );
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const DashboardScreen()));
+          // 3. Cuando regresemos, recargar los productos
+          _loadProducts();
         } else if (value == 'logout') {
           _logout();
         }
@@ -277,66 +251,12 @@ class _HomePageState extends State<HomePage>
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {
-        return _buildGridItem(product: products[index]);
+        final product = products[index];
+        return ProductGridItem(
+          product: product,
+          onAddToCart: () => _addToOrder(product),
+        );
       },
-    );
-  }
-
-  Widget _buildGridItem({required Product product}) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 6,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: Image.asset(
-              product.imagePath?? 'assets/images/default.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.fastfood, color: Colors.grey, size: 60);
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.productName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '\$${product.price.toStringAsFixed(2)}',
-                      style: TextStyle(fontSize: 15, color: Colors.grey[700]),
-                    ),
-                    InkWell(
-                      onTap: () => _addToOrder(product),
-                      child: const CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Color(0xFF980101),
-                        child: Icon(Icons.add, color: Colors.white, size: 22),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

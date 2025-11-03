@@ -31,8 +31,8 @@ class ProductRepository {
     final List<Map<String, dynamic>> maps = await db.query(
       'products',
       // Especificamos las columnas para que coincidan con el modelo Product.
-      columns: ['id_product', 'product_name', 'image_path', 'price'],
-      where: 'category = ?',
+      columns: ['id_product', 'id_status', 'product_name', 'image_path', 'price'],
+      where: 'category = ? AND id_status = 1',
       whereArgs: [category],
     );
  
@@ -40,6 +40,29 @@ class ProductRepository {
       return [];
     }
     return List.generate(maps.length, (i) => Product.fromJson(maps[i]));
+  }
+
+  /// Obtiene todos los productos de la base de datos, sin importar la categoría.
+  Future<List<Product>> getAllProducts() async {
+    final db = await _db;
+    final List<Map<String, dynamic>> maps = await db.query('products');
+
+    if (maps.isEmpty) {
+      return [];
+    }
+    return List.generate(maps.length, (i) => Product.fromJson(maps[i]));
+  }
+
+  /// Actualiza el estado de un producto a 'desactivado' (archivado).
+  Future<int> archiveProduct(int productId) async {
+    final db = await _db;
+    return await db.update('products', {'id_status': 2}, where: 'id_product = ?', whereArgs: [productId]);
+  }
+
+  /// Actualiza el estado de un producto a 'activo'.
+  Future<int> unarchiveProduct(int productId) async {
+    final db = await _db;
+    return await db.update('products', {'id_status': 1}, where: 'id_product = ?', whereArgs: [productId]);
   }
 
   /// Actualiza un producto existente en la base de datos.
