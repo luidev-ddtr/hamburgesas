@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hamburgesas/models/product_model.dart';
 import 'package:flutter_hamburgesas/services/product_repository.dart';
 import 'package:flutter_hamburgesas/widget/primary_action_button.dart';
+import 'dart:io';
+import 'package:flutter_hamburgesas/services/add_picture/take_picture_screen.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class ProductFormScreen extends StatefulWidget {
   /// El producto a editar. Si es `null`, la pantalla estará en modo "Crear".
@@ -80,6 +84,39 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
+  Future<void> _takePicture() async {
+    // Navega a la pantalla para tomar una foto y espera el resultado (la ruta de la imagen).
+    final tempImagePath = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (context) => const TakePictureScreen()),
+    );
+
+    // Si no se obtuvo una ruta de imagen temporal, no hacemos nada.
+    if (tempImagePath == null || tempImagePath.isEmpty) return;
+
+    try {
+      // 1. Obtener el directorio de documentos de la aplicación, que es un lugar permanente.
+      final appDir = await getApplicationDocumentsDirectory();
+      // 2. Crear un nombre de archivo único para evitar colisiones.
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}${p.extension(tempImagePath)}';
+      // 3. Crear la ruta de destino permanente.
+      final permanentImagePath = p.join(appDir.path, fileName);
+      // 4. Copiar el archivo desde la ruta temporal a la permanente.
+      await File(tempImagePath).copy(permanentImagePath);
+
+      // 5. Actualizar el controlador y la UI con la nueva ruta permanente.
+      setState(() {
+        _imagePathController.text = permanentImagePath;
+      });
+    } catch (e) {
+      // Manejar cualquier error durante la copia del archivo.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar la imagen: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,12 +149,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              _buildTextField(
-                controller: _imagePathController,
-                label: 'Ruta de la Imagen',
-                icon: Icons.image,
-                hint: 'Ej: assets/images/producto.png',
-              ),
+              // Reemplazamos el campo de texto de la imagen por el nuevo widget de previsualización y captura.
+              _buildImagePicker(),
               const SizedBox(height: 20),
               _buildDropdownField(
                 label: 'Categoría',
@@ -156,6 +189,42 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
+  Widget _buildImagePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Imagen del Producto',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  fit: BoxFit.cover,
+                  // El ValueListenableBuilder reconstruye la imagen cuando cambia la ruta.
+                  image: _imagePathController.text.startsWith('assets/')
+                      ? AssetImage(_imagePathController.text) as ImageProvider
+                      : FileImage(File(_imagePathController.text)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: PrimaryActionButton(text: 'TOMAR FOTO', onPressed: _takePicture),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
