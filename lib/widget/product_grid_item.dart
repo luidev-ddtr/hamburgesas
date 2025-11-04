@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_hamburgesas/models/product_model.dart';
 
 class ProductGridItem extends StatelessWidget {
@@ -10,7 +11,22 @@ class ProductGridItem extends StatelessWidget {
     required this.product,
     required this.onAddToCart,
   });
+ 
+  /// Construye el widget de imagen apropiado (Asset o File) basado en la ruta.
+  Widget _buildProductImage() {
+    final imagePath = product.imagePath;
 
+    // Si la ruta empieza con 'assets/', es un recurso de la app.
+    if (imagePath != null && imagePath.startsWith('assets/')) {
+      return Image.asset(imagePath, fit: BoxFit.cover);
+    }
+    // Si no, intentamos cargarlo como un archivo del dispositivo.
+    else if (imagePath != null && imagePath.isNotEmpty) {
+      return Image.file(File(imagePath), fit: BoxFit.cover);
+    }
+    // Como fallback, mostramos un ícono.
+    return const Icon(Icons.fastfood, color: Colors.grey, size: 60);
+  }
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -21,13 +37,7 @@ class ProductGridItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: Image.asset(
-              product.imagePath ?? 'assets/images/default.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.fastfood, color: Colors.grey, size: 60);
-              },
-            ),
+            child: _buildProductImage(),
           ),
           Padding(
             padding: const EdgeInsets.all(12.0),

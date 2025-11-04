@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_hamburgesas/models/product_model.dart';
 import 'package:flutter_hamburgesas/widget/dialog_header.dart';
 
@@ -48,6 +49,20 @@ class ProductListDialog extends StatelessWidget {
     );
   }
 
+  /// Determina qué ImageProvider usar (Asset o File) basado en la ruta.
+  ImageProvider? _buildProductImage(String? imagePath) {
+    // Si la ruta empieza con 'assets/', es un recurso de la app.
+    if (imagePath != null && imagePath.startsWith('assets/')) {
+      return AssetImage(imagePath);
+    }
+    // Si no, intentamos cargarlo como un archivo del dispositivo.
+    else if (imagePath != null && imagePath.isNotEmpty) {
+      return FileImage(File(imagePath));
+    }
+    // Si no hay ruta, no devolvemos ningún proveedor de imagen.
+    return null;
+  }
+
   Widget _buildProductList() {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 400),
@@ -64,8 +79,8 @@ class ProductListDialog extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 6),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundImage: product.imagePath != null ? AssetImage(product.imagePath!) : null,
-                child: product.imagePath == null ? const Icon(Icons.no_photography) : null,
+                backgroundImage: _buildProductImage(product.imagePath),
+                child: _buildProductImage(product.imagePath) == null ? const Icon(Icons.no_photography) : null,
               ),
               title: Text(
                 product.productName,
