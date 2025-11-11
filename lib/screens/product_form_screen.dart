@@ -122,6 +122,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'EDITAR PRODUCTO' : 'AGREGAR PRODUCTO'),
+        centerTitle: true,
+       
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -167,7 +169,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 items: [
                   {'id': 1, 'name': 'Activo'},
                   {'id': 2, 'name': 'Archivado'},
-                  {'id': 3, 'name': 'Sin Stock'},
                 ],
                 itemBuilder: (item) => DropdownMenuItem<int>(
                   value: item['id'] as int,

@@ -109,11 +109,11 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
       0.0, (sum, item) => sum + (item['price'] * item['quantity']));
 
     final orderForDb = db_order.Order(
-      total: total,
+      total: total, 
       orderDate: DateTime.now(),
     );
 
-    // try {
+    try {
     //   print("--- INICIANDO INSERCIÓN DE ORDEN ---");
     //   print("Datos de la Orden: ${orderForDb.toJson()}");
     //   print("Número de Artículos: ${orderItemsForDb.length}");
@@ -123,17 +123,17 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
     //   }
 
       
-    //   final newOrderId = await _orderRepository.insertOrder(orderForDb, orderItemsForDb);
+    final newOrderId = await _orderRepository.insertOrder(orderForDb, orderItemsForDb);
       
     //   print("--- INSERCIÓN COMPLETADA ---");
     //   print("Orden guardada con éxito. Nuevo ID de Orden: $newOrderId");
 
-    //   widget.onConfirmOrder();
+       widget.onConfirmOrder();
 
-    // } catch (e) {
+    } catch (e) {
     //   print("Error al guardar la orden: $e");
-    //   _showSnackBar("Error al guardar la orden. Intente de nuevo.");
-    // }
+       _showSnackBar("Error al guardar la orden. Intente de nuevo.");
+     }
   }
 
   @override

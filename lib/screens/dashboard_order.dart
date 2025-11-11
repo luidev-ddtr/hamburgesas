@@ -127,6 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('PANEL DE CONTROL'),
+        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -154,11 +155,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'Gestión de Productos',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
-        const SizedBox(height: 16),
-        PrimaryActionButton(
-          text: 'GESTIONAR PRODUCTOS',
+        const SizedBox(height: 10),
+       Center(
+        child: SizedBox(width:250,
+         child:PrimaryActionButton(
+          text: 'PRODUCTOS',
           onPressed: _showProductManagementDialog,
+         ),
         ),
+       )
       ],
     );
   }
