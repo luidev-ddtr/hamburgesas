@@ -125,7 +125,7 @@ class _HomePageState extends State<HomePage>
 
     return Scaffold(
       appBar: CustomAppBar(
-        titleText: 'REAL CAMPESTRE',
+        titleText: '',
         actions: [
           _buildHomeMenu(),
         ],

@@ -2,7 +2,7 @@ import 'package:flutter_hamburgesas/services/add_picture/display_picture_screen.
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 class TakePictureScreen extends StatefulWidget {
-  const TakePictureScreen({super.key});
+  const TakePictureScreen({super.key}); 
 
   @override
   State<TakePictureScreen> createState() => _TakePictureScreen();

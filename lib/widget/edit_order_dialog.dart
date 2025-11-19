@@ -305,7 +305,7 @@ class _EditOrderDialogState extends State<EditOrderDialog> {
   late Map<String, Map<String, dynamic>> _availableExtras;
   late bool _isBeverage;
   late double _totalPrice;
-
+ 
   @override
   void initState() {
     super.initState();
@@ -426,7 +426,7 @@ class _EditOrderDialogState extends State<EditOrderDialog> {
                 totalPrice: _totalPrice,
               ),
               
-              _QuantityInput(controller: _quantityController),
+              // _QuantityInput(controller: _quantityController), // Ocultado visualmente
 
               if (!_isBeverage && _availableExtras.isNotEmpty) 
                 _ExtrasSection(

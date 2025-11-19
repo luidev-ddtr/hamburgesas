@@ -8,7 +8,7 @@ class DisplayPictureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Foto')),
+      appBar: AppBar(title: const Text('Foto')), 
       body: Column(
         children: [
           Expanded(

@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        titleText: 'REAL CAMPESTRE',
+        titleText: '',
         actions: [_buildLoginMenu()],
       ),
       body: Stack(

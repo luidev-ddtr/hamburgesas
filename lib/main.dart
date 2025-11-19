@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hamburgesas/screens/login_screen.dart';
+import 'package:flutter_hamburgesas/widget/app_initializer_screen.dart';
 
-void main() {
+/// Punto de entrada principal de la aplicación Flutter.
+void main() async {
+  // Asegura que los bindings de Flutter estén inicializados. Esto es crucial
+  // para poder llamar a código nativo antes de que se ejecute runApp.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Ejecuta la aplicación. La inicialización de servicios se delega
+  // a AppInitializerScreen para asegurar que el contexto de la app esté disponible.
   runApp(const MyApp());
 }
 
@@ -12,7 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Real Campestre',
+      title: '',
       // TEMA ACTUALIZADO: Usa la fuente predeterminada del sistema (legible y limpia)
       theme: ThemeData(
         brightness: Brightness.light,
@@ -28,7 +35,7 @@ class MyApp extends StatelessWidget {
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
-        ),
+        ), 
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.grey[200],
@@ -43,7 +50,7 @@ class MyApp extends StatelessWidget {
           hintStyle: TextStyle(color: Colors.grey[500]),
         ),
       ),
-      home: const LoginPage(),
+      home: const AppInitializerScreen(),
     );
   }
 }
