@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Real Campestre',
+      title: '',
       // TEMA ACTUALIZADO: Usa la fuente predeterminada del sistema (legible y limpia)
       theme: ThemeData(
         brightness: Brightness.light,

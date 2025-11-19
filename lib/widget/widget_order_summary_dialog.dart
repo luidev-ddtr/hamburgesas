@@ -22,7 +22,7 @@ class OrderSummaryDialog extends StatefulWidget {
     required this.onDeleteItem,
     required this.onConfirmOrder,
   });
- 
+
   @override
   State<OrderSummaryDialog> createState() => _OrderSummaryDialogState();
 }
@@ -31,16 +31,6 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
   int? _selectedItemId;
   String? _expandedGroupName;
   final OrderRepository _orderRepository = OrderRepository();
-  
-  // 1. NUEVA VARIABLE: Copia local de los items para manipular en el diálogo
-  late List<Map<String, dynamic>> _localOrderItems;
-
-  @override
-  void initState() {
-    super.initState();
-    // Creamos una copia modificable de la lista que viene del padre
-    _localOrderItems = List<Map<String, dynamic>>.from(widget.orderItems);
-  }
 
   void _editSelectedItem() async {
     if (_selectedItemId == null) {
@@ -48,8 +38,7 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
       return;
     }
 
-    // Usamos la lista local
-    final selectedItem = _localOrderItems.firstWhere(
+    final selectedItem = widget.orderItems.firstWhere(
       (item) => item['id'] == _selectedItemId,
     );
 
@@ -63,35 +52,25 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
 
   void _handleEditResult(dynamic result) {
     if (result == 'delete') {
-      _deleteSelectedItem(); // Reutilizamos la lógica de borrar
+      widget.onDeleteItem(_selectedItemId!);
     } else if (result is Map<String, dynamic>) {
-      // Actualizamos al padre
       widget.onUpdateItem(result);
-      
-      // Actualizamos la lista local visualmente
-      setState(() {
-        final index = _localOrderItems.indexWhere((item) => item['id'] == result['id']);
-        if (index != -1) {
-          _localOrderItems[index] = result;
-        }
-        _selectedItemId = null;
-      });
+    }
+
+    if (mounted) {
+      setState(() => _selectedItemId = null);
     }
   }
 
   void _deleteSelectedItem() {
     if (_selectedItemId != null) {
-      // 1. Notificamos al padre (para que actualice la base de datos o estado global)
-      widget.onDeleteItem(_selectedItemId!);
-      
-      // 2. Actualizamos la lista LOCAL para que el ítem desaparezca de la vista
+      final itemToDeleteId = _selectedItemId;
+      // Se deselecciona el ítem antes de cualquier otra cosa.
       setState(() {
-        _localOrderItems.removeWhere((item) => item['id'] == _selectedItemId);
-        _selectedItemId = null; // Quitamos la selección
-        
-        // Si borramos un ítem y el grupo queda vacío, cerramos el acordeón (opcional)
-        // _expandedGroupName = null; 
+        _selectedItemId = null;
       });
+      // Se llama a la función para eliminar el ítem del estado global.
+      widget.onDeleteItem(itemToDeleteId!);
     } else {
       _showSnackBar('Seleccione un ítem para eliminar.');
     }
@@ -110,29 +89,28 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
     // --- INICIO DE LA LÓGICA DE AGRUPACIÓN ---
     final Map<int, db_order_item.OrderItem> groupedItems = {};
 
-    // IMPORTANTE: Iteramos sobre _localOrderItems (la lista actualizada)
-    for (var item in _localOrderItems) {
+    for (var item in widget.orderItems) {
       final productId = item['id_product'] as int;
       final quantity = item['quantity'] as int;
       final price = item['price'] as double;
 
       if (groupedItems.containsKey(productId)) {
+        // Si el producto ya existe en nuestro mapa, solo sumamos la cantidad.
         final existingItem = groupedItems[productId]!;
         groupedItems[productId] = db_order_item.OrderItem(
-          idOrder: 0, 
+          idOrder: 0, // Temporal
           idProduct: productId,
           quantity: existingItem.quantity + quantity,
-          unitPriceAtOrder: price, 
+          unitPriceAtOrder: price, // Usamos el precio del último ítem (asumimos que es el mismo)
         );
       } else {
+        // Si es la primera vez que vemos este producto, lo añadimos al mapa.
         groupedItems[productId] = db_order_item.OrderItem(idOrder: 0, idProduct: productId, quantity: quantity, unitPriceAtOrder: price);
       }
     }
     final orderItemsForDb = groupedItems.values.toList();
     // --- FIN DE LA LÓGICA DE AGRUPACIÓN ---
-    
-    // Calculamos el total usando la lista local
-    final total = _localOrderItems.fold<double>(
+    final total = widget.orderItems.fold<double>(
       0.0, (sum, item) => sum + (item['price'] * item['quantity']));
 
     final orderForDb = db_order.Order(
@@ -141,24 +119,31 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
     );
 
     try {
-      // Si la lista está vacía, evitamos guardar una orden vacía
-      if (orderItemsForDb.isEmpty) {
-         _showSnackBar("No hay productos en la orden para guardar.");
-         return;
-      }
+    //   print("--- INICIANDO INSERCIÓN DE ORDEN ---");
+    //   print("Datos de la Orden: ${orderForDb.toJson()}");
+    //   print("Número de Artículos: ${orderItemsForDb.length}");
+    //   print("Artículos a insertar (agrupados):");
+    //   for (var item in orderItemsForDb) {
+    //     print("- Producto ID: ${item.idProduct}, Cantidad: ${item.quantity}, Precio: ${item.unitPriceAtOrder}");
+    //   }
 
-      final newOrderId = await _orderRepository.insertOrder(orderForDb, orderItemsForDb);
-      widget.onConfirmOrder();
+      
+    final newOrderId = await _orderRepository.insertOrder(orderForDb, orderItemsForDb);
+      
+    //   print("--- INSERCIÓN COMPLETADA ---");
+    //   print("Orden guardada con éxito. Nuevo ID de Orden: $newOrderId");
+
+       widget.onConfirmOrder();
 
     } catch (e) {
+    //   print("Error al guardar la orden: $e");
        _showSnackBar("Error al guardar la orden. Intente de nuevo.");
      }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Usamos _localOrderItems en lugar de widget.orderItems
-    final orderItems = _localOrderItems.map(OrderItem.fromMap).toList();
+    final orderItems = widget.orderItems.map(OrderItem.fromMap).toList();
     final groupedItems = OrderCalculatorService.groupItemsByName(orderItems);
     final subtotal = OrderCalculatorService.calculateSubtotal(orderItems);
 
@@ -176,7 +161,6 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
             ),
             const SizedBox(height: 20),
             const Divider(),
-            // Pasamos la lista local
             _buildOrderContent(orderItems, groupedItems, subtotal),
           ],
         ),
@@ -184,9 +168,6 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
     );
   }
 
-  // El resto de tu código (_buildOrderContent, _buildOrderList, etc.) 
-  // permanece igual, ya que ahora reciben los datos procesados en el build.
-  
   Widget _buildOrderContent(
     List<OrderItem> orderItems,
     Map<String, List<OrderItem>> groupedItems,
@@ -275,14 +256,12 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
         OrderActionButton(
           icon: Icons.edit_outlined,
           label: 'EDITAR',
-          isEnabled: _selectedItemId != null,
-          onPressed: _editSelectedItem, 
+          onPressed: _editSelectedItem,
         ),
         OrderActionButton(
           icon: Icons.delete_outline,
           label: 'ELIMINAR',
-          isEnabled: _selectedItemId != null,
-          onPressed: _deleteSelectedItem, 
+          onPressed: _deleteSelectedItem,
         ),
       ],
     );
@@ -307,4 +286,4 @@ class _OrderSummaryDialogState extends State<OrderSummaryDialog> {
       ),
     );
   }
-}
+}  

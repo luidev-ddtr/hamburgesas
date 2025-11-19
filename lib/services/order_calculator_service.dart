@@ -40,4 +40,4 @@ class OrderCalculatorService {
   static String formatNotes(String? notes) {
     return (notes?.isNotEmpty ?? false) ? 'Notas: "$notes"' : '';
   }
-}
+} 

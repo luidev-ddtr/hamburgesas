@@ -39,7 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showDialog(
       context: context, 
       builder: (context) => AlertDialog(
-        title: Center(child: const DialogHeader(icon: Icons.settings, title: 'GESTIONAR PRODUCTOS')),
+        title: Center(child: const DialogHeader(icon: Icons.settings, title: 'PRODUCTOS')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

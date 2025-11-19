@@ -27,7 +27,7 @@ class ProductListDialog extends StatelessWidget {
           children: [
             const DialogHeader(
               icon: Icons.fastfood_outlined,
-              title: 'LISTA DE PRODUCTOS',
+              title: 'PRODUCTOS',
             ),
             const SizedBox(height: 20),
             const Divider(),
