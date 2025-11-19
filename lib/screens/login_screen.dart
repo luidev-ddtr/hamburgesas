@@ -3,6 +3,9 @@ import 'home_page_screen.dart'; // Asegúrate de que esta ruta de importación s
 import '../widget/custom_app_bar.dart';
 import '../widget/primary_action_button.dart';
 
+// 1. IMPORTACIONES NECESARIAS PARA FIREBASE MESSAGING
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 // PÁGINA DE LOGIN REFACTORIZADA
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,6 +20,16 @@ class _LoginPageState extends State<LoginPage> {
   final _userController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // =======================================================
+  // 2. INICIALIZACIÓN DE NOTIFICACIONES (INTEGRACIÓN FCM)
+  // =======================================================
+  @override
+  void initState() {
+    super.initState();
+    // Llamar a la función de configuración de notificaciones al cargar la pantalla.
+    _setupFlutterNotifications();
+  }
+
   @override
   void dispose() {
     _userController.dispose();
@@ -24,18 +37,69 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  // FUNCIÓN PARA OBTENER PERMISOS Y EL TOKEN FCM
+  Future<void> _setupFlutterNotifications() async {
+    final fcm = FirebaseMessaging.instance;
+
+    // 1. Pedir permisos
+    NotificationSettings settings = await fcm.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+
+      // 2. Obtener el Token FCM
+      final fcmToken = await fcm.getToken();
+      print('=======================================');
+      print('FCM Token: $fcmToken'); // <-- Aquí verás el Token en la consola
+      print('=======================================');
+
+      // 3. Manejar mensajes en FOREGROUND (App abierta)
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('Got a message whilst in the foreground!');
+
+        if (message.notification != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Notificación: ${message.notification!.title}'),
+              backgroundColor: Colors.blueGrey,
+            ),
+          );
+        }
+      });
+      // La lógica para manejar notificaciones en Background/Terminada debe ir en main.dart
+    } else {
+      print('User declined or has not accepted permission');
+    }
+  }
+
+  // =======================================================
+  // 3. WIDGETS Y MÉTODOS EXISTENTES (CUERPO DEL LOGIN)
+  // =======================================================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        titleText: '',
-        actions: [_buildLoginMenu()],
-      ),
+      appBar: CustomAppBar(titleText: '', actions: [_buildLoginMenu()]),
       body: Stack(
         children: [
           // Elementos decorativos de fondo
-          const _DecorativeCircle(top: -100, left: -100, radius: 250, opacity: 0.1),
-          const _DecorativeCircle(bottom: -150, right: -100, radius: 400, opacity: 0.05),
+          const _DecorativeCircle(
+            top: -100,
+            left: -100,
+            radius: 250,
+            opacity: 0.1,
+          ),
+          const _DecorativeCircle(
+            bottom: -150,
+            right: -100,
+            radius: 400,
+            opacity: 0.05,
+          ),
           Center(
             child: SingleChildScrollView(
               child: Padding(
@@ -53,8 +117,6 @@ class _LoginPageState extends State<LoginPage> {
     return PopupMenuButton<String>(
       onSelected: (value) async {
         if (value == 'dashboard') {
-          // Para este ejemplo, mostramos un mensaje. En una app real,
-          // se verificaría si el usuario está logueado antes de navegar.
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Por favor, inicie sesión para acceder al panel.'),
@@ -123,10 +185,7 @@ class _LoginPageState extends State<LoginPage> {
             },
           ),
           const SizedBox(height: 50),
-          PrimaryActionButton(
-            text: 'Ingresar',
-            onPressed: _onLoginPressed,
-          ),
+          PrimaryActionButton(text: 'Ingresar', onPressed: _onLoginPressed),
         ],
       ),
     );
@@ -134,7 +193,8 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onLoginPressed() {
     if (_formKey.currentState!.validate()) {
-      if (_userController.text == 'admin' && _passwordController.text == '123456') {
+      if (_userController.text == 'admin' &&
+          _passwordController.text == '123456') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
@@ -170,11 +230,7 @@ class _LoginHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        Icon(
-          Icons.person_pin_circle,
-          color: Colors.red[300],
-          size: 90.0,
-        ),
+        Icon(Icons.person_pin_circle, color: Colors.red[300], size: 90.0),
       ],
     );
   }
@@ -206,7 +262,10 @@ class _LoginInputField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.black54,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -217,7 +276,9 @@ class _LoginInputField extends StatelessWidget {
             suffixIcon: isPassword
                 ? IconButton(
                     icon: Icon(
-                      isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: Colors.grey[600],
                     ),
                     onPressed: onVisibilityToggle,

@@ -1,14 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hamburgesas/widget/app_initializer_screen.dart';
+import 'package:flutter_hamburgesas/widget/app_initializer_screen.dart'; // Importación original
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+// Importa el archivo generado por FlutterFire (Asegúrate de que exista)
+import 'firebase_options.dart';
+
+// --- MANEJADOR DE MENSAJES EN BACKGROUND ---
+// Debe ser una función de alto nivel (fuera de cualquier clase)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Inicialización de Firebase necesaria si la app está totalmente cerrada
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  print("Handling a background message: ${message.messageId}");
+  print("Data: ${message.data}");
+  // Aquí no se puede mostrar UI, solo lógica de datos o logging
+}
+
+// ------------------------------------------
 
 /// Punto de entrada principal de la aplicación Flutter.
 void main() async {
-  // Asegura que los bindings de Flutter estén inicializados. Esto es crucial
-  // para poder llamar a código nativo antes de que se ejecute runApp.
+  // Asegura que los bindings de Flutter estén inicializados.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Ejecuta la aplicación. La inicialización de servicios se delega
-  // a AppInitializerScreen para asegurar que el contexto de la app esté disponible.
+  // 1. Inicializar Firebase (Crucial para usar FirebaseMessaging)
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // 2. Asignar el manejador de mensajes en background
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Ejecuta la aplicación.
   runApp(const MyApp());
 }
 
@@ -19,13 +45,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: '',
-      // TEMA ACTUALIZADO: Usa la fuente predeterminada del sistema (legible y limpia)
+      title: 'Demo Hamburguesas y Notificaciones',
+      // TEMA ORIGINAL APLICADO
       theme: ThemeData(
         brightness: Brightness.light,
         primarySwatch: Colors.red,
         scaffoldBackgroundColor: Colors.white,
-        // No se especifica 'fontFamily', por lo que usa la fuente del sistema.
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           elevation: 2.0,
@@ -50,7 +75,9 @@ class MyApp extends StatelessWidget {
           hintStyle: TextStyle(color: Colors.grey[500]),
         ),
       ),
+      // Se utiliza la pantalla de inicialización original
       home: const AppInitializerScreen(),
     );
   }
 }
+

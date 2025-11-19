@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "789371925380",
+    "project_id": "hamburguesas-c0315",
+    "storage_bucket": "hamburguesas-c0315.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:789371925380:android:be88425a2fe1e2af7a63d1",
+        "android_client_info": {
+          "package_name": "com.example.flutter_hamburgesas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdh_YTR0EQ_IaHHgHWQfiRJ3WB9mK3fME"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
