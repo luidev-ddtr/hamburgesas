@@ -124,15 +124,8 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         }
-        if (value == 'settings') {
-          // Lógica para configuración
-        }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'settings',
-          child: Text('Configuración'),
-        ),
         const PopupMenuItem<String>(
           value: 'dashboard',
           child: ListTile(
@@ -177,12 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                 _isPasswordVisible = !_isPasswordVisible;
               });
             },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Por favor, ingrese una contraseña';
-              }
-              return null;
-            },
+            validator: _validatePassword,
           ),
           const SizedBox(height: 50),
           PrimaryActionButton(text: 'Ingresar', onPressed: _onLoginPressed),
@@ -191,10 +179,31 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, ingrese una contraseña';
+    }
+    if (value.length < 8) {
+      return 'La contraseña debe tener al menos 8 caracteres.';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Debe contener al menos una letra mayúscula.';
+    }
+    if (!RegExp(r'[a-z]').hasMatch(value)) {
+      return 'Debe contener al menos una letra minúscula.';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(value)) {
+      return 'Debe contener al menos un número.';
+    }
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
+      return 'Debe contener al menos un carácter especial.';
+    }
+    return null;
+  }
+
   void _onLoginPressed() {
     if (_formKey.currentState!.validate()) {
-      if (_userController.text == 'admin' &&
-          _passwordController.text == '123456') {
+      if (_userController.text == 'AdminUser' && _passwordController.text == 'Segura_123!') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
