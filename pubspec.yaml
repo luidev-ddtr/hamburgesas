@@ -45,6 +45,8 @@ dependencies:
   camera: ^0.11.3
   firebase_core: ^4.2.1
   firebase_messaging: ^16.0.4
+  flutter_native_splash: ^2.4.7
+  flutter_launcher_icons: ^0.14.4
  
 dev_dependencies:
   flutter_test:
@@ -100,3 +102,14 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_native_splash:
+  color: "#FFFFFF"       # Color de fondo
+  image: assets/images/logo.jpeg  # Ruta de tu logo
+  android: true
+  ios: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/logo.jpeg
+  min_sdk_android: 21

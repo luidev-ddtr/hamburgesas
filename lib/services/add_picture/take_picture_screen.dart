@@ -28,7 +28,7 @@ class _TakePictureScreen extends State<TakePictureScreen> {
    // _cameraController = CameraController();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tomar foto del libro'),
+        title: const Text('Foto del producto'),
       ),
       body: FutureBuilder<void>(future: initialize(), builder: (context,snapshot){
        if(snapshot.hasError){
